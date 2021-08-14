@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from datetime import datetime
 from typing import Callable
@@ -90,6 +91,7 @@ def training(
     epochs: int = 100,
     cv: int = 5,
     batch_size: int = 64,
+    save_path: str = "",
 ):
     for epoch in trange(1, epochs + 1, desc="Epoch"):
         print(f"------------------------- Epoch {epoch:>3} -------------------------")
@@ -113,6 +115,7 @@ def training(
         t = datetime.now()
         today = f"{t.year % 100}{t.month:02}{t.day:02}"
         file_name = f"model{today}.pth"
+        path_and_file_name = os.path.join(save_path, file_name)
 
         # KFold 시작
         for train_idx, val_idx in kfold.split(dataset[:][0], dataset[:][3]):
@@ -160,12 +163,16 @@ def training(
         )
 
         # 베스트 모델 저장
-        if best_score < avg_accuracy:
+        if best_score <= avg_accuracy:
             best_score = avg_accuracy
             best_model = deepcopy(model.state_dict())
 
-            torch.save(best_model, file_name)
-            print(f"모델 저장: {file_name}, accuarcy: {best_score}")
+            torch.save(best_model, path_and_file_name)
+            print(f"모델 저장: {path_and_file_name}, accuarcy: {best_score}")
 
     # 훈련 완료
     print("완료")
+
+    # 마지막 모델 저장
+    file_name_final = f"model{today}-final.pth"
+    torch.save(model.state_dict(), os.path.join(save_path, file_name_final))
