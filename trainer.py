@@ -109,6 +109,11 @@ def training(
         best_score = 0
         best_model = None
 
+        # 파일 이름 정하기: model{오늘날짜}.pth, 예) model210813.pth
+        t = datetime.now()
+        today = f"{t.year % 100}{t.month:02}{t.day:02}"
+        file_name = f"model{today}.pth"
+
         # KFold 시작
         for train_idx, val_idx in kfold.split(dataset[:][0], dataset[:][3]):
             # fold별 데이터로더 정의
@@ -159,15 +164,8 @@ def training(
             best_score = avg_accuracy
             best_model = deepcopy(model.state_dict())
 
+            torch.save(best_model, file_name)
+            print(f"모델 저장: {file_name}, accuarcy: {best_score}")
+
     # 훈련 완료
     print("완료")
-
-    # 파일 이름 정하기: model{오늘날짜}.pth, 예) model210813.pth
-    t = datetime.now()
-    today = f"{t.year % 100}{t.month:02}{t.day:02}"
-    file_name = f"model{today}.pth"
-
-    # 모델 저장
-    if best_model is not None:
-        torch.save(best_model, file_name)
-        print("모델 저장:", file_name)
