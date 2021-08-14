@@ -93,6 +93,16 @@ def training(
     batch_size: int = 64,
     save_path: str = "",
 ):
+
+    # 베스트 스코어의 모델을 저장하는데 사용할 항목
+    best_score = 0
+
+    # 파일 이름 정하기: checkpoint{오늘날짜}.pth, 예) checkpoint210813.pth
+    t = datetime.now()
+    today = f"{t.year % 100}{t.month:02}{t.day:02}"
+    file_name = f"checkpoint{today}.pth"
+    path_and_file_name = os.path.join(save_path, file_name)
+
     for epoch in trange(1, epochs + 1, desc="Epoch"):
         print(f"------------------------- Epoch {epoch:>3} -------------------------")
         kfold = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
@@ -106,16 +116,6 @@ def training(
         avg_train_loss = 0
         avg_test_loss = 0
         avg_accuracy = 0
-
-        # 베스트 스코어의 모델을 저장하는데 사용할 항목
-        best_score = 0
-        best_model = None
-
-        # 파일 이름 정하기: model{오늘날짜}.pth, 예) model210813.pth
-        t = datetime.now()
-        today = f"{t.year % 100}{t.month:02}{t.day:02}"
-        file_name = f"model{today}.pth"
-        path_and_file_name = os.path.join(save_path, file_name)
 
         # KFold 시작
         for train_idx, val_idx in kfold.split(dataset[:][0], dataset[:][3]):
@@ -165,9 +165,15 @@ def training(
         # 베스트 모델 저장
         if best_score <= avg_accuracy:
             best_score = avg_accuracy
-            best_model = deepcopy(model.state_dict())
 
-            torch.save(best_model, path_and_file_name)
+            torch.save(
+                {
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "scheduler_state_dict": scheduler.state_dict(),
+                },
+                path_and_file_name,
+            )
             print(f"모델 저장: {path_and_file_name}, accuarcy: {best_score}")
 
     # 훈련 완료
@@ -175,4 +181,11 @@ def training(
 
     # 마지막 모델 저장
     file_name_final = f"model{today}-final.pth"
-    torch.save(model.state_dict(), os.path.join(save_path, file_name_final))
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
+        },
+        os.path.join(save_path, file_name_final),
+    )
