@@ -9,7 +9,7 @@ repeat_pattern = re.compile(r"(.)\1{2,}")
 space_pattern = re.compile(r"\s+")
 
 
-def text_preprocessing(text):
+def text_preprocessing(text: str):
     text = preprocess_pattern.sub("", text)
     text = repeat_pattern.sub(r"\1" * 3, text)
     text = space_pattern.sub(" ", text)
@@ -21,11 +21,13 @@ def df_to_feature_and_label(
     tokenizer: PreTrainedTokenizer,
     feature_col: str = "content",
     label_col: str = "gender_hate",
-    max_length=128,
+    include_label: bool = True,
+    max_length=256,
 ):
     tokens = tokenizer(
         list(df[feature_col]),
         padding="max_length",
+        truncation=True,
         max_length=max_length,
         return_tensors="pt",
     )
@@ -33,6 +35,8 @@ def df_to_feature_and_label(
     input_ids = tokens["input_ids"]
     attention_mask = tokens["attention_mask"]
     token_type_ids = tokens["token_type_ids"]
-    labels = torch.from_numpy(df[label_col].values)
+    if not include_label:
+        return input_ids, attention_mask, token_type_ids
 
+    labels = torch.from_numpy(df[label_col].values)
     return input_ids, attention_mask, token_type_ids, labels

@@ -150,7 +150,6 @@ def training(
         progressbar.close()  # 진행바 닫기, leave=False로 설정했으므로 이 때 사라짐
 
         if scheduler is not None:
-            # epoch 단위 스케쥴러 진행, https://pytorch.org/docs/stable/optim.html 참고
             scheduler.step()
 
         # epoch 단위 출력
